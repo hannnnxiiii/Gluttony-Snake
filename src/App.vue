@@ -82,25 +82,6 @@ let crossLeftFlag = -2
 let crossRightFlag = -2
 let crossDownFlag = -2
 const snakeLogic = () => {
-  // 记录是否吃球
-  let flag = 0
-  // 如果吃球，重新生成球，蛇长度加1
-  if (
-    parseInt(snake.value[0].style.top) + yDirection.value ===
-      parseInt(ball.value.style.top) &&
-    parseInt(snake.value[0].style.left) + xDirection.value ===
-      parseInt(ball.value.style.left)
-  ) {
-    success.value.load()
-    success.value.play()
-    if (plusOrNot) {
-      score.value += 500
-    } else {
-      score.value += 100
-    }
-    createBall()
-    flag = 1
-  }
   // 遍历处理每个方块
 
   for (let i = length.value - 1; i >= 0; i--) {
@@ -196,7 +177,21 @@ const snakeLogic = () => {
       }
     }
   }
-  length.value += flag
+  // 如果吃球，重新生成球，蛇长度加1
+  if (
+    parseInt(snake.value[0].style.top) === parseInt(ball.value.style.top) &&
+    parseInt(snake.value[0].style.left) === parseInt(ball.value.style.left)
+  ) {
+    success.value.load()
+    success.value.play()
+    if (plusOrNot) {
+      score.value += 500
+    } else {
+      score.value += 100
+    }
+    createBall()
+    length.value += 1
+  }
 }
 // 切换方向函数
 const turnDirection = (x, y) => {
