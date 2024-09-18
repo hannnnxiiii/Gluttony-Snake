@@ -5,7 +5,7 @@ import {
   CaretRight,
   CaretBottom,
 } from "@element-plus/icons-vue"
-import { ref } from "vue"
+import { nextTick, onMounted, ref } from "vue"
 
 // 分数
 const score = ref(0)
@@ -33,6 +33,8 @@ const success = ref(null)
 const isGaming = ref(0)
 // 游戏介绍
 const introduction = ref(null)
+// 网格
+const canvas = ref(null)
 // 定时器
 let timer = null
 // 球状态切换倒计时
@@ -48,6 +50,33 @@ const rightButton = ref(null)
 const downButton = ref(null)
 // 开始游戏
 const startGame = () => {
+  // 切换按钮
+  isGaming.value = 1
+  nextTick(() => {
+    const ctx = canvas.value.getContext("2d")
+    ctx.lineWidth = 0.3
+    for (let i = 1; i < 50; i++) {
+      ctx.beginPath() // 开始一个新路径
+      ctx.moveTo(i * 10, 0)
+      ctx.lineTo(i * 10, 500)
+      ctx.stroke() // 渲染路径
+      ctx.beginPath() // 开始一个新路径
+      ctx.moveTo(0, i * 10)
+      ctx.lineTo(500, i * 10)
+      ctx.stroke() // 渲染路径
+    }
+    ctx.lineWidth = 0.1
+    for (let i = 0; i < 51; i++) {
+      ctx.beginPath() // 开始一个新路径
+      ctx.moveTo(i * 10 - 5, 0)
+      ctx.lineTo(i * 10 - 5, 500)
+      ctx.stroke() // 渲染路径
+      ctx.beginPath() // 开始一个新路径
+      ctx.moveTo(0, i * 10 - 5)
+      ctx.lineTo(500, i * 10 - 5)
+      ctx.stroke() // 渲染路径
+    }
+  })
   xDirection.value = 0
   yDirection.value = stepLength.value
   introduction.value.style.display = "none"
@@ -63,8 +92,7 @@ const startGame = () => {
   ball.value.style.filter = "blur(0px)"
   // 去除遮罩
   mask.value.style.display = "none"
-  // 切换按钮
-  isGaming.value = 1
+
   // 初始化蛇头位置
   for (let i = 0; i < 5; i++) {
     snake.value[i].style.top = "240px"
@@ -189,10 +217,9 @@ const snakeLogic = () => {
   }
   // 如果吃球，重新生成球，蛇长度加1
   if (
-    parseInt(snake.value[0].style.top) > parseInt(ball.value.style.top) - 10 &&
+    parseInt(snake.value[0].style.top) >= parseInt(ball.value.style.top) &&
     parseInt(snake.value[0].style.top) < parseInt(ball.value.style.top) + 10 &&
-    parseInt(snake.value[0].style.left) >
-      parseInt(ball.value.style.left) - 10 &&
+    parseInt(snake.value[0].style.left) >= parseInt(ball.value.style.left) &&
     parseInt(snake.value[0].style.left) < parseInt(ball.value.style.left) + 10
   ) {
     success.value.load()
@@ -365,6 +392,8 @@ const changeDifficulty = (n) => {
           >
         </div>
       </div>
+      <!-- 网格 -->
+      <canvas ref="canvas" v-if="isGaming" width="500" height="500"></canvas>
     </div>
     <!-- 开始游戏 -->
     <el-button
