@@ -9,6 +9,8 @@ import { ref } from "vue"
 
 // 分数
 const score = ref(0)
+// 步长
+const stepLength = ref(5)
 // 开始游戏按钮
 const startButton = ref(null)
 // 控制面板
@@ -22,7 +24,7 @@ const ball = ref(null)
 // x轴方向
 const xDirection = ref(0)
 // y轴方向
-const yDirection = ref(10)
+const yDirection = ref(stepLength.value)
 // 存储地图每块地皮情况
 const snakeOrNot = new Map()
 // 成功音效
@@ -46,6 +48,8 @@ const rightButton = ref(null)
 const downButton = ref(null)
 // 开始游戏
 const startGame = () => {
+  xDirection.value = 0
+  yDirection.value = stepLength.value
   introduction.value.style.display = "none"
   length.value = 5
   // 清空分数
@@ -107,21 +111,27 @@ const snakeLogic = () => {
         isGaming.value = 0
       }
       // 如果要前进的位置超出了地图，那就穿过去到另一边
-      if (parseInt(snake.value[i].style.top) + yDirection.value > 490) {
+      if (
+        parseInt(snake.value[i].style.top) + yDirection.value >
+        500 - stepLength.value
+      ) {
         snake.value[i].style.transition = "none"
         snake.value[i].style.top = "0px"
         crossUpFlag = i
       } else if (parseInt(snake.value[i].style.top) + yDirection.value < 0) {
         snake.value[i].style.transition = "none"
-        snake.value[i].style.top = "490px"
+        snake.value[i].style.top = 500 - stepLength.value + "px"
         crossDownFlag = i
-      } else if (parseInt(snake.value[i].style.left) + xDirection.value > 490) {
+      } else if (
+        parseInt(snake.value[i].style.left) + xDirection.value >
+        500 - stepLength.value
+      ) {
         snake.value[i].style.transition = "none"
         snake.value[i].style.left = "0px"
         crossRightFlag = i
       } else if (parseInt(snake.value[i].style.left) + xDirection.value < 0) {
         snake.value[i].style.transition = "none"
-        snake.value[i].style.left = "490px"
+        snake.value[i].style.left = 500 - stepLength.value + "px"
         crossLeftFlag = i
       } else {
         snake.value[i].style.top =
@@ -179,8 +189,11 @@ const snakeLogic = () => {
   }
   // 如果吃球，重新生成球，蛇长度加1
   if (
-    parseInt(snake.value[0].style.top) === parseInt(ball.value.style.top) &&
-    parseInt(snake.value[0].style.left) === parseInt(ball.value.style.left)
+    parseInt(snake.value[0].style.top) > parseInt(ball.value.style.top) - 10 &&
+    parseInt(snake.value[0].style.top) < parseInt(ball.value.style.top) + 10 &&
+    parseInt(snake.value[0].style.left) >
+      parseInt(ball.value.style.left) - 10 &&
+    parseInt(snake.value[0].style.left) < parseInt(ball.value.style.left) + 10
   ) {
     success.value.load()
     success.value.play()
@@ -271,6 +284,11 @@ document.addEventListener("keydown", (e) => {
     downButton.value.$el.click()
   }
 })
+// 切换难度
+const changeDifficulty = (n) => {
+  stepLength.value = n
+  yDirection.value = n
+}
 </script>
 
 <template>
@@ -283,7 +301,8 @@ document.addEventListener("keydown", (e) => {
       <div
         v-for="item in length"
         :key="item"
-        class="w-[10px] h-[10px] bg-[#409eff] absolute rounded-[3px] hidden transition-all ease-linear duration-[50ms]"
+        :style="{ width: stepLength + 'px', height: stepLength + 'px' }"
+        class="bg-[#409eff] absolute rounded-[3px] hidden transition-all ease-linear duration-[50ms]"
         ref="snake"
       ></div>
       <!-- 球 -->
@@ -294,15 +313,31 @@ document.addEventListener("keydown", (e) => {
       ></div>
       <!-- 遮罩 -->
       <div
-        class="hidden w-[500px] h-[500px] bg-[#0000008c] z-50 absolute text-[40px] text-white font-bold flex justify-center flex-col items-center"
+        class="p-[10px] hidden w-[500px] h-[500px] bg-[#0000008c] z-50 absolute text-[40px] text-white font-bold flex justify-evenly flex-col items-center"
         ref="mask"
       >
         游戏结束
         <div>你的得分是：{{ score }}</div>
+        <div class="flex flex-col h-[100px] justify-between text-[20px]">
+          <div class="flex justify-center">
+            <el-button type="success" @click="changeDifficulty(5)"
+              >钩盲蛇</el-button
+            >
+            <el-button type="danger" @click="changeDifficulty(10)"
+              >大蟒蛇</el-button
+            >
+          </div>
+          <span v-if="stepLength === 5" class="text-[#95d475]"
+            >蛇身更小，速度更慢，更容易吃到球了！但因为移速太慢，吃到闪烁球的机会更少了！</span
+          >
+          <span v-else class="text-[#f56c6c]"
+            >蛇身更大，速度更快，想要挑战高分必须靠它！</span
+          >
+        </div>
       </div>
       <!-- 游戏说明 -->
-      <p
-        class="flex flex-col font-bold text-[20px] text-[#409eff] justify-around h-[400px]"
+      <div
+        class="flex flex-col font-bold text-[20px] text-[#409eff] justify-around h-[500px] p-[10px]"
         ref="introduction"
       >
         <span
@@ -313,7 +348,23 @@ document.addEventListener("keydown", (e) => {
         <span>吃到闪烁球加500分, 红球100分, 都是加1格长度</span>
         <span>也就是说，尽快吃球，你就能在更低的难度下达到更高分！</span>
         <span>祝你好运，现在开始吧！</span>
-      </p>
+        <div class="flex flex-col h-[100px] justify-between">
+          <div class="flex justify-center">
+            <el-button type="success" @click="changeDifficulty(5)"
+              >钩盲蛇</el-button
+            >
+            <el-button type="danger" @click="changeDifficulty(10)"
+              >大蟒蛇</el-button
+            >
+          </div>
+          <span v-if="stepLength === 5" class="text-[#95d475]"
+            >蛇身更小，速度更慢，更容易吃到球了！但因为移速太慢，吃到闪烁球的机会更少了！</span
+          >
+          <span v-else class="text-[#f56c6c]"
+            >蛇身更大，速度更快，想要挑战高分必须靠它！</span
+          >
+        </div>
+      </div>
     </div>
     <!-- 开始游戏 -->
     <el-button
@@ -332,7 +383,7 @@ document.addEventListener("keydown", (e) => {
         <el-button
           type="primary"
           :icon="CaretTop"
-          @click="turnDirection(0, -10)"
+          @click="turnDirection(0, -stepLength)"
           ref="upButton"
         ></el-button>
         <div class="flex my-[10px]">
@@ -340,20 +391,20 @@ document.addEventListener("keydown", (e) => {
             type="primary"
             :icon="CaretLeft"
             class="mr-[50px]"
-            @click="turnDirection(-10, 0)"
+            @click="turnDirection(-stepLength, 0)"
             ref="leftButton"
           ></el-button>
           <el-button
             type="primary"
             :icon="CaretRight"
-            @click="turnDirection(10, 0)"
+            @click="turnDirection(stepLength, 0)"
             ref="rightButton"
           ></el-button>
         </div>
         <el-button
           type="primary"
           :icon="CaretBottom"
-          @click="turnDirection(0, 10)"
+          @click="turnDirection(0, stepLength)"
           ref="downButton"
         ></el-button>
       </div>
